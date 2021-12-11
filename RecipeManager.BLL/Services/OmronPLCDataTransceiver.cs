@@ -35,12 +35,6 @@ namespace RecipeManager.BLL.Services
         const short COMPONENTS_WEIGHTS_START_CELL = 20020;
         const short COMPONENTS_WEIGHTS_END_CELL = 24179;
 
-        const short WATERS_WEIGHTS_START_CELL = 24180;
-        const short WATERS_WEIGHTS_END_CELL = 24439;
-
-        const short WATERS_TEMPS_START_CELL = 24440;
-        const short WATERS_TEMPS_END_CELL = 24569;
-
         const int MAX_CELL = 480;
         short valueForNullable = 1;
 
@@ -82,33 +76,7 @@ namespace RecipeManager.BLL.Services
                 UploadComponentsCodes(GetAllComponentsCodes(listCodesDownload));
                 UploadComponentsNames(GetAllComponentsNames(listCodesDownload));
                 UploadComponentsWeights(GetAllComponentsWeights(listCodesDownload));
-                UploadWatersWeights(GetAllWatersWeights(listCodesDownload));
-                UploadWaterTemps(GetAllWaterTemps(listCodesDownload));
-
-                #region vers1
-                //foreach (var listCodes in listCodesRec)
-                //{
-                //    status = SendCodes(listCodes,cellsPLC[count]);
-                //    if(status == 0)
-                //    {
-                //        count++;
-                //        if (count >= cellsPLC.Count)
-                //        {
-                //            SendStatusValue(statusValue);
-                //            _etherNetPLC.Close();
-                //            return (false, "");
-                //        }
-
-                //    }
-                //    else
-                //    {
-                //        _etherNetPLC.Close();
-                //        return (true, $"Метод Write вернул -1, {cellsPLC[count].CellAddress}");
-
-                //    }
-
-                //}
-                #endregion
+               
             }
             SendStatusValue(statusValue);
             _etherNetPLC.Close();
@@ -192,35 +160,6 @@ namespace RecipeManager.BLL.Services
             return componentsWeightCodes;
         }
 
-        private List<short> GetAllWatersWeights(List<Codes> codesList)
-        {
-            var waterWeightCodes = new List<short>();
-
-            foreach (var codes in codesList)
-            {
-                foreach (var weightCodes in codes.WaterWeightCodes)
-                {
-                    waterWeightCodes.Add(weightCodes.Water_WeightCodes_Low);
-                    waterWeightCodes.Add(weightCodes.Water_WeightCodes_High);
-
-                }
-            }
-            return waterWeightCodes;
-        }
-
-        private List<short> GetAllWaterTemps(List<Codes> codesList)
-        {
-            var waterTempCodes = new List<short>();
-
-            foreach (var codes in codesList)
-            {
-                foreach (var tempCodes in codes.WaterTempCodes)
-                {
-                    waterTempCodes.Add(tempCodes.Water_TempCodes);
-                }
-            }
-            return waterTempCodes;
-        }
         #endregion
 
         #region UploadMethods
@@ -336,51 +275,6 @@ namespace RecipeManager.BLL.Services
             }
         }
 
-        private void UploadWatersWeights(List<short> weightCodes)
-        {
-            //SendCodes(weightCodes, (short)(WATERS_WEIGHTS_START_CELL));
-
-            int div = weightCodes.Count / MAX_CELL;//целая часть
-            int mod = weightCodes.Count % MAX_CELL;//остаток
-
-            if (div > 0)
-            {
-                for (int i = 0; i < div; i++)
-                {
-                    var list = GetArrayRange(weightCodes, i* MAX_CELL, (i * MAX_CELL) + MAX_CELL);
-                    SendCodes(list, (short)(WATERS_WEIGHTS_START_CELL + i * MAX_CELL));
-                }
-            }
-
-            if (mod > 0)
-            {
-                var list = GetArrayRange(weightCodes, div * MAX_CELL, weightCodes.Count);
-                SendCodes(list, (short)(WATERS_WEIGHTS_START_CELL + (div * MAX_CELL)));
-            }
-        }
-
-        private void UploadWaterTemps(List<short> tempCodes)
-        {
-            //SendCodes(tempCodes, (short)(WATERS_TEMPS_START_CELL));
-
-            int div = tempCodes.Count / MAX_CELL;//целая часть
-            int mod = tempCodes.Count % MAX_CELL;//остаток
-
-            if (div > 0)
-            {
-                for (int i = 0; i < div; i++)
-                {
-                    var list = GetArrayRange(tempCodes, i* MAX_CELL, (i * MAX_CELL) + MAX_CELL);
-                    SendCodes(list, (short)(WATERS_TEMPS_START_CELL + i * MAX_CELL));
-                }
-            }
-
-            if (mod > 0)
-            {
-                var list = GetArrayRange(tempCodes, div * MAX_CELL, tempCodes.Count);
-                SendCodes(list, (short)(WATERS_TEMPS_START_CELL + (div * MAX_CELL)));
-            }
-        }
         #endregion
         private short SendCodes(List<short> codes,CellPLC cell)
         {

@@ -69,23 +69,6 @@ namespace RecipeManager.BLL.Services
                     codes.ComponentsWeightCodes.Add(compWeightCodes);
                 }
 
-                var waterWeightCodes = new WaterWeightCodes();
-                var waterTempCodes = new WaterTempCodes();
-
-                recipeCodes.WaterCodes.Comp_NameCodes = GetCodesOfComponentNameText(recipe.WaterComp.Comp_Name);
-                recipeCodes.WaterCodes.Comp_Code = (short)recipe.WaterComp.Comp_Code;
-
-                recipeCodes.WaterCodes.Comp_Weight_LowWord = GetTwoShortValues(recipe.WaterComp.Comp_Weight).LowValue;
-                recipeCodes.WaterCodes.Comp_Weight_HighWord = GetTwoShortValues(recipe.WaterComp.Comp_Weight).HighValue;
-                waterWeightCodes.Water_WeightCodes_Low = GetTwoShortValues(recipe.WaterComp.Comp_Weight).LowValue;
-                waterWeightCodes.Water_WeightCodes_High = GetTwoShortValues(recipe.WaterComp.Comp_Weight).HighValue;
-
-                recipeCodes.WaterCodes.Comp_Temper = (short) recipe.WaterComp.Comp_Temper;
-                waterTempCodes.Water_TempCodes = (short)recipe.WaterComp.Comp_Temper;
-
-                codes.WaterWeightCodes.Add(waterWeightCodes);
-                codes.WaterTempCodes.Add(waterTempCodes);
-
                 listCodes.Add(codes);
                 listCodesRecipe.Add(recipeCodes);
             }

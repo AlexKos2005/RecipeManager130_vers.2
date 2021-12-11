@@ -12,8 +12,8 @@ namespace RecipeManager.BLL.Services
 
     public class TxtRecipeParser : ITxtParser,IDisposable
     {
-        const int RECIPE_STR_COUNT = 54;
-        const int COMPONENT_COUNT = 17;
+        const int RECIPE_STR_COUNT = 50;
+        const int COMPONENT_COUNT = 16;
         const int COMPONENT_FOR_SKIPING = 16; //компонент перед водой лишний и всегда нулевой - пропускаем.
         private string currentRecipeName = null;
 
@@ -39,44 +39,21 @@ namespace RecipeManager.BLL.Services
                     c++;
                     recipe.ProductCount = Convert.ToInt32(fileStr[i * RECIPE_STR_COUNT + c]);
                     c++;
-                    //recipe.OperatorCode = Convert.ToInt32(fileStr[i * RECIPE_STR_COUNT + c]);
-                    //c++;
-                    //recipe.RecipeDelay = Convert.ToInt32(fileStr[i * RECIPE_STR_COUNT + c]);
-                    //c++;
-
+               
                     recipe.DownloadStatusFlag = false;
 
                     for (int f=0;f<COMPONENT_COUNT;f++)
                     {
-                        //if(f==COMPONENT_FOR_SKIPING-1)//пропускаем 16 компонент (в текстовом файле лишний)
-                        //{
-                        //    c = c + 3;
-                        //    continue;
-                        //}
-                        if(f==COMPONENT_COUNT-1)//вода
-                        {
-                            var water = new WaterComponent();
-                            water.Comp_Code = Convert.ToInt32(fileStr[i * RECIPE_STR_COUNT + c]);
-                            c++;
-                            water.Comp_Name = fileStr[i * RECIPE_STR_COUNT + c];
-                            c++;
-                            water.Comp_Weight = Convert.ToInt32(fileStr[i * RECIPE_STR_COUNT + c]);
-                            c++;
-                            water.Comp_Temper = Convert.ToInt32(fileStr[i * RECIPE_STR_COUNT + c]);
-                            c++;
-                            recipe.WaterComp = water;
-                        }
-                        else //простой компонент
-                        {
-                            var component = new Component();
-                            component.Comp_Code = Convert.ToInt32(fileStr[i * RECIPE_STR_COUNT + c]);
-                            c++;
-                            component.Comp_Name = fileStr[i * RECIPE_STR_COUNT + c];
-                            c++;
-                            component.Comp_Weight = Convert.ToInt32(fileStr[i * RECIPE_STR_COUNT + c]);
-                            c++;
-                            recipe.Components.Add(component);
-                        } 
+                        //простой компонент
+                        var component = new Component();
+                        component.Comp_Code = Convert.ToInt32(fileStr[i * RECIPE_STR_COUNT + c]);
+                        c++;
+                        component.Comp_Name = fileStr[i * RECIPE_STR_COUNT + c];
+                        c++;
+                        component.Comp_Weight = Convert.ToInt32(fileStr[i * RECIPE_STR_COUNT + c]);
+                        c++;
+                        recipe.Components.Add(component);
+
                     }
 
                     currentRecipeName = fileStr[i * RECIPE_STR_COUNT].ToString(); // если рецепт считался без ошибок, то фиксируем его название.

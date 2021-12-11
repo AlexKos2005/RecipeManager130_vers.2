@@ -13,7 +13,6 @@ namespace RecipeManager.BLL.Entities
 
         public List<ComponentCodes> ComponentsCodes { get; set; } = new List<ComponentCodes>();
 
-        public WaterCodes WaterCodes { get; set; } = new WaterCodes();
     
     }
 }

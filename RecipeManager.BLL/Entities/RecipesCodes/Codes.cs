@@ -16,10 +16,5 @@ namespace RecipeManager.BLL.Entities.RecipesCodes
 
         public List<ComponentWeightCodes> ComponentsWeightCodes { get; set; } = new List<ComponentWeightCodes>();
 
-        public List<WaterWeightCodes> WaterWeightCodes { get; set; } = new List<WaterWeightCodes>();
-
-        public List<WaterTempCodes> WaterTempCodes { get; set; } = new List<WaterTempCodes>();
-
-
     }
 }

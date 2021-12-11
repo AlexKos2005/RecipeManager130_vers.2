@@ -95,13 +95,6 @@ namespace RecipeManager
             CountDayDownloadLabel.Text = Convert.ToString(0);
             Initialize();
 
-            var timer = new System.Windows.Forms.Timer();
-            timer.Interval = (_appSettingsDTO.GetDataCycleTimer * 60) * 1000;
-            timer.Tick += Timer_Tick;
-            timer.Start();
-
-            
-
             progressBar1.Visible = false;
 
         }
@@ -126,50 +119,6 @@ namespace RecipeManager
 
         }
 
-        private async void Timer_Tick(object sender, EventArgs e)
-        {
-            await Task.Run(() =>
-            {
-                if (!_blockFlag)
-                {
-                    _blockFlag = true;
-                    var reciveResult = _pLCDataReciver.GetDataWithResult();
-                    if (!reciveResult.IsError)
-                    {
-                        var convertResult = _codeTransformator.GetRecipesWithResult(reciveResult.CodesArray);
-                        if (!convertResult.IsError)
-                        {
-                            var saveDosesResult = _doseRepository.SetDosesDtoWithResult(convertResult.doses);
-                            if (!saveDosesResult.IsError)
-                            {
-                                _nlog.Info($"//Получение и сохранение данных доз прошло успешно. Кол-во принятых сохраненных доз:{convertResult.doses.Count}//{ DateTime.Now.ToShortDateString()}//{DateTime.Now.ToShortTimeString()}");
-                                _pLCDataReciver.ClearMemory();
-                            }
-                            else
-                            {
-                                _nlog.Error($"//Ошибка сохранения доз {saveDosesResult.Message}//{ DateTime.Now.ToShortDateString()}//{DateTime.Now.ToShortTimeString()}");
-                            }
-                        }
-                        else
-                        {
-                            _nlog.Error($"//Ошибка конвертирования кодов в дозы {convertResult.Message}//{ DateTime.Now.ToShortDateString()}//{DateTime.Now.ToShortTimeString()}");
-                        }
-                    }
-                    else
-                    {
-                        _nlog.Error($"//Ошибка получения кодов доз из ПЛК {reciveResult.Message}//{ DateTime.Now.ToShortDateString()}//{DateTime.Now.ToShortTimeString()}");
-                    }
-                    _blockFlag = false;
-                }
-            });
-
-            await Task.Run(() =>
-            {
-                CheckFirstTimeReport();
-               // CheckSecondTimeReport();
-            });
-
-        }
         private void DownloadFromFileToBuffer_Click(object sender, EventArgs e)
         {
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
@@ -268,53 +217,6 @@ namespace RecipeManager
 
         }
 
-        private void DownLoadStatistic_Click(object sender, EventArgs e)
-        {
-           
-            if (!_blockFlag)
-            {
-                _blockFlag = true;
-                //DownLoadDayBufferToPLC.Enabled = false;
-                var reciveResult = _pLCDataReciver.GetDataWithResult();
-                if (!reciveResult.IsError)
-                {
-                    var convertResult = _codeTransformator.GetRecipesWithResult(reciveResult.CodesArray);
-                    if (!convertResult.IsError)
-                    {
-                         var saveDosesResult = _doseRepository.SetDosesDtoWithResult(convertResult.doses);
-                        if (!saveDosesResult.IsError)
-                        {
-                            _nlog.Info($"//Получение и сохранение данных доз прошло успешно. Кол-во принятых сохраненных доз:{convertResult.doses.Count}//{ DateTime.Now.ToShortDateString()}//{DateTime.Now.ToShortTimeString()}");
-                            MessageBox.Show($"Получение и сохранение данных доз прошло успешно. Кол-во принятых сохраненных доз:{convertResult.doses.Count}","Системное сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            _pLCDataReciver.ClearMemory();
-                        }
-                        else
-                        {
-                            _nlog.Error($"//Ошибка сохранения доз {saveDosesResult.Message}//{ DateTime.Now.ToShortDateString()}//{DateTime.Now.ToShortTimeString()}");
-                            MessageBox.Show($"Ошибка сохранения доз {saveDosesResult.Message}", "Системное сообщение", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                    }
-                    else
-                    {
-                        _nlog.Error($"//Ошибка конвертирования кодов в дозы {convertResult.Message}//{ DateTime.Now.ToShortDateString()}//{DateTime.Now.ToShortTimeString()}");
-                        MessageBox.Show($"Ошибка конвертирования кодов в дозы {convertResult.Message}", "Системное сообщение", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-                else
-                {
-                    _nlog.Error($"//Ошибка получения кодов доз из ПЛК {reciveResult.Message}//{ DateTime.Now.ToShortDateString()}//{DateTime.Now.ToShortTimeString()}");
-                    MessageBox.Show($"Ошибка получения кодов доз из ПЛК {reciveResult.Message}", "Системное сообщение", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                _blockFlag = false;
-
-            }
-            else
-            {
-                MessageBox.Show("Система занята считыванием рецептов, повторите попытку!", "Системное сообщение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-
-        }
-
 
         private List<Recipe> ParseRangeRecipes(List<Recipe> recipes, short lowLine, short highLine)
         {
@@ -361,12 +263,7 @@ namespace RecipeManager
                     list.Add(comp.Comp_Weight_LowWord);
                     list.Add(comp.Comp_Weight_HighWord);
                 }
-                list.AddRange(codes.WaterCodes.Comp_NameCodes);
-                list.Add(codes.WaterCodes.Comp_Code);
-                list.Add(codes.WaterCodes.Comp_Weight_LowWord);
-                list.Add(codes.WaterCodes.Comp_Weight_HighWord);
-                list.Add(codes.WaterCodes.Comp_Temper);
-
+    
                 listGeneral.Add(list);
             }
 
@@ -408,7 +305,6 @@ namespace RecipeManager
                 strPointer = strPointer + str.Length;
 
                 MakeComponentsList(richTextBox1, recipe.Components, ref strPointer);
-                MakeWaterComponentList(richTextBox1, recipe.WaterComp, ref strPointer);
 
                 recipeCounter++;
             }
@@ -467,14 +363,8 @@ namespace RecipeManager
                 }
                 else
                 {
-                    if (component.Comp_Name == "Вода")
-                    {
-                        str = $"Код: {component.Comp_Code}\n {component.Comp_Name}\n  Вес: {component.Comp_Weight / 1000.00} кг\n";
-                    }
-                    else
-                    {
-                        str = $"Код: {component.Comp_Code}\n {component.Comp_Name}\n  Вес: {component.Comp_Weight / 1000.00} кг\n";
-                    }
+                   
+                   str = $"Код: {component.Comp_Code}\n {component.Comp_Name}\n  Вес: {component.Comp_Weight / 1000.00} кг\n";
                 }
 
                 richTextBox.Select(strPointer, str.Length);
@@ -483,25 +373,7 @@ namespace RecipeManager
                 strPointer = strPointer + str.Length;
             }
         }
-        private void MakeWaterComponentList(RichTextBox richTextBox, WaterComponent waterComponent, ref int strPointer)
-        {
-            string str = null;
-            if (waterComponent.Comp_Name == "Вода")
-            {
-                str = $"Код: {waterComponent.Comp_Code}\n {waterComponent.Comp_Name}\n  Вес: {waterComponent.Comp_Weight / 1000.00} кг\n  Температура: {waterComponent.Comp_Temper / 10.00} град.\n";
-            }
-            else
-            {
-                str = $"Код: {waterComponent.Comp_Code}\n {waterComponent.Comp_Name}\n  Вес: {waterComponent.Comp_Weight / 1000.00} кг\n  Температура: {waterComponent.Comp_Temper / 10.00} град.\n"; ;
-            }
-
-
-            richTextBox.Select(strPointer, str.Length);
-            richTextBox.SelectionColor = Color.Black;
-            richTextBox.AppendText(str);
-            strPointer = strPointer + str.Length;
-
-        }
+       
 
         private void CellGeneratorRandom()
         {
