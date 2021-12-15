@@ -14,11 +14,13 @@ namespace RecipeManager.BLL.Services
 {
     public class OmronPLCDataTransceiver : IPLCDataTransceiver,IDisposable
     {
-        //10 слов-название+общий вес(8+2),15*12-15 компонентов(8-назвение,2-код,2-вес),10 слов вода(4-название,2-код,2-вес,2-темпер). Итого 200 слов+10 запас=210 на рецепт
+        //10 слов-название+общий вес(8+2),16*11 - 16 компонентов(8-название,1-код,2-вес). Итого 186 слов+4 запас=190 на рецепт
         const int START_CELL = 50;
-        const short STEP = 210;
+        const short STEP = 186;
         const short STATUS_CELL = 24600;
-        const short NULLABLE_CELL = 24601;
+        const short NULLABLE_CELL = 24601;//ячейка, при записи значения 1 в которую, должен запустить процесс очистки всех ячеек (рецептов).
+        short valueForNullable = 1;//значение для обнуления ячеек.
+        const int MAX_CELL = 480;//максимальное кол-во ячеек, которое можно записать в ПЛК за один раз (до 500 - ограничение либы).
 
         const short RECIPES_NAMES_START_CELL = 0;
         const short RECIPES_NAMES_END_CELL = 1039;
@@ -34,10 +36,6 @@ namespace RecipeManager.BLL.Services
 
         const short COMPONENTS_WEIGHTS_START_CELL = 20020;
         const short COMPONENTS_WEIGHTS_END_CELL = 24179;
-
-        const int MAX_CELL = 480;
-        short valueForNullable = 1;
-
 
         private readonly string  _ipAddress = null;
         private short _cellPointer = 0;

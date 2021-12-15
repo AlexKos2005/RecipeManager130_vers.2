@@ -15,10 +15,7 @@ namespace RecipeManager.DAL.Extentions
             return new AppSettings()
             {
                 IpAddressPLC = settings.IpAddressPLC,
-                SaveReportPath = settings.SaveReportPath,
-                GetDataCycleTimer = settings.GetDataCycleTimer,
-                TimeForFirstReport = settings.TimeForFirstReport,
-                TimeForSecondReport = settings.TimeForSecondReport
+             
             };
         }
 
@@ -27,10 +24,7 @@ namespace RecipeManager.DAL.Extentions
             return new AppSettingsDTO()
             {
                 IpAddressPLC = settings.IpAddressPLC,
-                SaveReportPath = settings.SaveReportPath,
-                GetDataCycleTimer = settings.GetDataCycleTimer,
-                TimeForFirstReport = settings.TimeForFirstReport,
-                TimeForSecondReport = settings.TimeForSecondReport
+               
 
             };
         }

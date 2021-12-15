@@ -83,10 +83,6 @@ namespace RecipeManager.DAL.Repositories
             var settings = new AppSettingsDTO()
             {
                 IpAddressPLC = "192.168.250.1",
-                SaveReportPath = @"C:\Users\User\source\repos\ConsoleApp15\ConsoleApp15\bin\Debug\netcoreapp3.1",
-                GetDataCycleTimer = 5,
-                TimeForFirstReport = "8:00",
-                TimeForSecondReport = "20:00"
             };
             _fileStream = new FileStream("AppSettings.json", FileMode.OpenOrCreate);
             var wr = new StreamWriter(_fileStream);

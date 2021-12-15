@@ -48,6 +48,7 @@ namespace RecipeManager
         private readonly IDoseRepository _doseRepository = null;
         private readonly IReportsRepository _reportsRepository = null;
         private readonly IReportMaker _reportMaker = null;
+        private readonly AppSettingsDTO _appSettingsDTO;
         private List<RecipeCodes> _codesRecipesBuffer = null;
         private List<Recipe> _recipes = null;
         private List<CellPLC> _cells = null;
@@ -67,12 +68,11 @@ namespace RecipeManager
         private bool _blockFlag = false;
         private bool _firstReportWas = false;
         private bool _secondReportWas = false;
-        private AppSettingsDTO _appSettingsDTO = null;
         #endregion
 
         #region Constructors
-        public Form1(ITxtParser txtParser, ICodesTransformator codeTransformator, IPLCCellsChecker pLCCellsChecker,
-            IPLCDataTransceiver pLCDataTransceiver, ILogger nLog, IJsonRepository jsonRepository, IPLCDataReciver pLCDataReciver,
+        public Form1(AppSettingsDTO appSettingsDTO, ITxtParser txtParser, ICodesTransformator codeTransformator, IPLCCellsChecker pLCCellsChecker,
+            IPLCDataTransceiver pLCDataTransceiver, IPLCDataReciver pLCDataReciver,
             IArrayToCodesConverter codesConverter, IDoseRepository doseRepository, IReportsRepository reportsRepository, IReportMaker reportMaker)
         {
             InitializeComponent();
@@ -80,8 +80,8 @@ namespace RecipeManager
             _codeTransformator = codeTransformator ?? throw new ArgumentNullException(nameof(codeTransformator));
             _pLCCellsChecker = pLCCellsChecker ?? throw new ArgumentNullException(nameof(pLCCellsChecker));
             _pLCDataTransceiver = pLCDataTransceiver ?? throw new ArgumentNullException(nameof(pLCDataTransceiver));
-            _nlog = nLog ?? throw new ArgumentNullException(nameof(nLog));
-            _jsonRepository = jsonRepository ?? throw new ArgumentNullException(nameof(jsonRepository));
+            _nlog = LogManager.GetCurrentClassLogger();
+            _appSettingsDTO = appSettingsDTO;
             _pLCDataReciver = pLCDataReciver ?? throw new ArgumentNullException(nameof(pLCDataReciver));
             _codesConverter = codesConverter ?? throw new ArgumentNullException(nameof(codesConverter));
             _doseRepository = doseRepository ?? throw new ArgumentNullException(nameof(doseRepository));
@@ -93,7 +93,6 @@ namespace RecipeManager
             _nlog.Info("Запуск приложения");
             CountRecipeGetLabel.Text = Convert.ToString(0);
             CountDayDownloadLabel.Text = Convert.ToString(0);
-            Initialize();
 
             progressBar1.Visible = false;
 
@@ -102,22 +101,6 @@ namespace RecipeManager
         #endregion
 
         #region Methods
-
-        private void Initialize()
-        {
-            _nlog.Info("sfsf");
-            var result = _jsonRepository.GetSettingsWithResult();
-            if (!result.IsError)
-            {
-                _appSettingsDTO = result.Settings;
-            }
-            else
-            {
-                MessageBox.Show($"При считывании файла настроек произошла ошибка!\n Закройте приложение и обратитесь к системному администратору \n ", "Системное сообщение", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                _nlog.Error($"{result.Message}//{DateTime.Now.ToShortDateString()}-{DateTime.Now.ToShortTimeString()}//");
-            }
-
-        }
 
         private void DownloadFromFileToBuffer_Click(object sender, EventArgs e)
         {
@@ -424,122 +407,7 @@ namespace RecipeManager
             }
         }
 
-        private void CheckFirstTimeReport()
-        {
-            var year = DateTime.Now.Year.ToString().ToCharArray().Count() < 2 ? "0" + DateTime.Now.Year.ToString() : DateTime.Now.Year.ToString();
-            var month = DateTime.Now.Month.ToString().ToCharArray().Count() < 2 ? "0" + DateTime.Now.Month.ToString() : DateTime.Now.Month.ToString();
-            var day = DateTime.Now.Day.ToString().ToCharArray().Count() < 2 ? "0" + DateTime.Now.Day.ToString() : DateTime.Now.Day.ToString();
-            var hours = TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport).Hours.ToString().ToCharArray().Count() < 2 ? "0" + TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport).Hours.ToString() : TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport).Hours.ToString();
-            var minutes = TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport).Minutes.ToString().ToCharArray().Count() < 2 ? "0" + TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport).Minutes.ToString() : TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport).Minutes.ToString();
-            string fileName = $"{year}.{month}.{day}.{hours}.{minutes}";
-
-            if (_firstReportWas == false)
-            {
-
-                if (DateTime.Now.TimeOfDay >= TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport))
-                {
-                var findResult1 = _reportsRepository.FindReportByDateAndTimeWithResult(DateTime.Now.Date, TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport));
-                if (findResult1.IsError)
-                {
-                    if (findResult1.report != null)
-                    {
-                        var getDosesResult1 = _doseRepository.GetDosesDtoByDateTimeWithResult(DateTime.Now.AddDays(-1), TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport), DateTime.Now.Date, TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport));
-                            if (!getDosesResult1.IsError)
-                            {
-                                var reportResult = _reportMaker.MakeReport(_appSettingsDTO.SaveReportPath, fileName, getDosesResult1.dosesDto);
-                                if (!reportResult.IsError)
-                                {
-                                    var report = new ReportDto()
-                                    {
-                                        ReportDate = DateTime.Now.Date,
-                                        ReportTime = TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport),
-                                        ReportingFlag = true,
-                                        ReportingMessage = "Ok"
-                                    };
-                                    _reportsRepository.SetReportInfoWithResult(report);
-                                    _firstReportWas = true;
-                                    _nlog.Info($"Отчет за {fileName} успешно сгененрирован и сохранен");
-                                }
-                                else
-                                {
-                                    _nlog.Error($"Не удалось сгенерировать отчет за {fileName}");
-                                }
-                            }
-                        else
-                        {
-                            _nlog.Error($"Не удалось получить данные доз из бд за {fileName}");
-                        }
-                    }
-                    else
-                    {
-                        _firstReportWas = true;
-                    }
-                }
-                else
-                    {
-                        _nlog.Error($"Не удалось получить данные отчетов из бд за {fileName}");
-                    }
-                }
-        }
-    }
-
-        private void CheckSecondTimeReport()
-        {
-            var year = DateTime.Now.Year.ToString().ToCharArray().Count() < 2 ? "0" + DateTime.Now.Year.ToString() : DateTime.Now.Year.ToString();
-            var month = DateTime.Now.Month.ToString().ToCharArray().Count() < 2 ? "0" + DateTime.Now.Month.ToString() : DateTime.Now.Month.ToString();
-            var day = DateTime.Now.Day.ToString().ToCharArray().Count() < 2 ? "0" + DateTime.Now.Day.ToString() : DateTime.Now.Day.ToString();
-            var hours = TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport).Hours.ToString().ToCharArray().Count() < 2 ? "0" + TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport).Hours.ToString() : TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport).Hours.ToString();
-            var minutes = TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport).Minutes.ToString().ToCharArray().Count() < 2 ? "0" + TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport).Minutes.ToString() : TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport).Minutes.ToString();
-            string fileName = $"{year}.{month}.{day}.{hours}.{minutes}";
-
-            if (_secondReportWas == false)
-            {
-                if ((DateTime.Now.TimeOfDay >= TimeSpan.Parse(_appSettingsDTO.TimeForSecondReport)))
-                {
-                    var findResult1 = _reportsRepository.FindReportByDateAndTimeWithResult(DateTime.Now.Date, TimeSpan.Parse(_appSettingsDTO.TimeForSecondReport));
-                    if (!findResult1.IsError)
-                    {
-                        if (findResult1.report == null)
-                        {
-                            var getDosesResult1 = _doseRepository.GetDosesDtoByDateTimeWithResult(DateTime.Now.Date.AddDays(-1), TimeSpan.Parse(_appSettingsDTO.TimeForFirstReport), DateTime.Now.Date, TimeSpan.Parse(_appSettingsDTO.TimeForSecondReport));
-                            if (!getDosesResult1.IsError)
-                            {
-                                var reportResult = _reportMaker.MakeReport(_appSettingsDTO.SaveReportPath, fileName, getDosesResult1.dosesDto);
-                                if (!reportResult.IsError)
-                                {
-                                    var report = new ReportDto()
-                                    {
-                                        ReportDate = DateTime.Now.Date,
-                                        ReportTime = TimeSpan.Parse(_appSettingsDTO.TimeForSecondReport),
-                                        ReportingFlag = true,
-                                        ReportingMessage = "Ok"
-                                    };
-                                    _reportsRepository.SetReportInfoWithResult(report);
-                                    _secondReportWas = true;
-                                    _nlog.Info($"Отчет за {fileName} успешно сгененрирован и сохранен");
-                                }
-                                else
-                                {
-                                    _nlog.Error($"Не удалось сгенерировать отчет за {fileName}");
-                                }
-                            }
-                            else
-                            {
-                                _nlog.Error($"Не удалось получить данные доз из бд за {fileName}");
-                            }
-                        }
-                        else
-                        {
-                            _secondReportWas = true;
-                        }
-                    }
-                    else
-                    {
-                        _nlog.Error($"Не удалось получить данные отчетов из бд за {fileName}");
-                    }
-                }
-            }
-        }
+      
 
         #endregion
 
@@ -560,6 +428,11 @@ namespace RecipeManager
         {
             Show();
             WindowState = FormWindowState.Normal;
+        }
+
+        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+
         }
     }
 }

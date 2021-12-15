@@ -161,6 +161,7 @@ namespace RecipeManager
             this.notifyIcon1.Text = "RecipeManager";
             this.notifyIcon1.Visible = true;
             this.notifyIcon1.DoubleClick += new System.EventHandler(this.notifyIcon1_DoubleClick);
+            this.notifyIcon1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon1_MouseDoubleClick);
             // 
             // Form1
             // 
@@ -178,6 +179,7 @@ namespace RecipeManager
             this.Controls.Add(this.richTextBox1);
             this.Controls.Add(this.DownLoadDayBufferToPLC);
             this.Controls.Add(this.DownloadFromFileToBuffer);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "Form1";
             this.Text = "RecipeManager_130";
